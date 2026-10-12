@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  # Trivy runs from its official image at a pinned version instead of a third-party action.
+  TRIVY_VERSION: "0.75.0"
+
+jobs:
+  test:
+    name: Build and test (Java 21, PostgreSQL in Testcontainers)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Build and run all tests
+        run: mvn -B verify
+      - name: Test report
+        if: always()
+        run: |
+          {
+            echo "### Test results"
+            echo
+            echo "| Suite | Tests | Failures | Errors |"
+            echo "|---|---|---|---|"
+            for f in target/surefire-reports/TEST-*.xml; do
+              name=$(basename "$f" .xml | sed 's/TEST-io.github.t4lh8.fightcamp.//')
+              t=$(grep -o 'tests="[0-9]*"' "$f" | head -1 | tr -dc 0-9)
+              fl=$(grep -o 'failures="[0-9]*"' "$f" | head -1 | tr -dc 0-9)
+              e=$(grep -o 'errors="[0-9]*"' "$f" | head -1 | tr -dc 0-9)
+              echo "| $name | $t | $fl | $e |"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  docker:
+    name: Docker image builds and Trivy scan
+    runs-on: ubuntu-24.04
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t fightcamp:${{ github.sha }} .
+      - name: Scan image for HIGH and CRITICAL vulnerabilities
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:${TRIVY_VERSION}             image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 fightcamp:${{ github.sha }}
+
+  terraform:
+    name: GCP Terraform (fmt, validate, Trivy misconfig scan)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: deploy/gcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform fmt -check
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+      - name: Trivy config scan
+        run: docker run --rm -v "$PWD:/src" aquasec/trivy:${TRIVY_VERSION} config --exit-code 1 /src

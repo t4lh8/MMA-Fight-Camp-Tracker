@@ -1,0 +1,2 @@
+project_id = "my-fightcamp-project"
+image      = "europe-north1-docker.pkg.dev/my-fightcamp-project/fightcamp/app:1.0.0"

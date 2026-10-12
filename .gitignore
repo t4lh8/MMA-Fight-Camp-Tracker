@@ -1,0 +1,11 @@
+target/
+*.class
+*.log
+.idea/
+.vscode/
+*.iml
+.env
+deploy/gcp/.terraform/
+deploy/gcp/*.tfstate*
+deploy/gcp/terraform.tfvars
+!.env.example

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fight Camp Tracker</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+        <polygon points="10,2 22,2 30,10 30,22 22,30 10,30 2,22 2,10" fill="none" stroke="#3987e5" stroke-width="2.5"/>
+        <polygon points="12,8 20,8 24,12 24,20 20,24 12,24 8,20 8,12" fill="#3987e5" opacity="0.25"/>
+      </svg>
+      <span>Fight Camp Tracker</span>
+    </div>
+    <div id="who" class="who" hidden>
+      <span id="who-name"></span>
+      <button id="logout" class="ghost" type="button">Log out</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="auth" class="card auth" hidden>
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" data-tab="login">Log in</button>
+        <button type="button" class="tab" data-tab="register">Register</button>
+      </div>
+      <form id="login-form" autocomplete="on">
+        <label>Username <input name="username" required maxlength="32" autocomplete="username"></label>
+        <label>Password <input name="password" type="password" required maxlength="128" autocomplete="current-password"></label>
+        <button type="submit">Log in</button>
+      </form>
+      <form id="register-form" hidden>
+        <label>Username <input name="username" required pattern="[a-zA-Z0-9_.\-]{3,32}" maxlength="32" autocomplete="username"></label>
+        <label>Password <input name="password" type="password" required minlength="12" maxlength="128" autocomplete="new-password"></label>
+        <label>I am
+          <select name="role"><option value="ATHLETE">an athlete</option><option value="COACH">a coach</option></select>
+        </label>
+        <label>Weight class <select name="weightClass" class="wc-select"></select></label>
+        <p class="hint">At least 12 characters. Common passwords and passwords that contain your username are refused.</p>
+        <button type="submit">Create account</button>
+      </form>
+      <p id="auth-msg" class="msg" role="alert"></p>
+    </section>
+
+    <section id="athlete" hidden>
+      <div id="dash"></div>
+
+      <div class="grid two forms">
+        <form id="session-form" class="card">
+          <h2>Log training</h2>
+          <div class="row">
+            <label>Date <input type="date" name="date" required></label>
+            <label>Type <select name="discipline" required>
+              <option>STRIKING</option><option>WRESTLING</option><option>BJJ</option>
+              <option>SPARRING</option><option>STRENGTH</option><option>CONDITIONING</option>
+            </select></label>
+          </div>
+          <div class="row">
+            <label>Minutes <input type="number" name="durationMin" min="1" max="480" value="60" required></label>
+            <label>Effort (RPE 1-10) <input type="number" name="rpe" min="1" max="10" value="6" required></label>
+            <label>Rounds <input type="number" name="rounds" min="0" max="50"></label>
+          </div>
+          <label>Notes <input name="notes" maxlength="500"></label>
+          <button type="submit">Save session</button>
+          <p class="msg" role="alert"></p>
+        </form>
+
+        <div class="stack">
+          <form id="fight-form" class="card">
+            <h2>Log fight</h2>
+            <div class="row">
+              <label>Date <input type="date" name="date" required></label>
+              <label>Opponent <input name="opponent" maxlength="80" required></label>
+            </div>
+            <div class="row">
+              <label>Result <select name="result"><option>WIN</option><option>LOSS</option><option>DRAW</option><option>NC</option></select></label>
+              <label>Method <select name="method"><option value="KO_TKO">KO/TKO</option><option value="SUBMISSION">Submission</option><option value="DECISION">Decision</option><option value="OTHER">Other</option></select></label>
+              <label>Round <input type="number" name="endRound" min="1" max="5" value="3" required></label>
+            </div>
+            <label>Event <input name="eventName" maxlength="120"></label>
+            <button type="submit">Save fight</button>
+            <p class="msg" role="alert"></p>
+          </form>
+
+          <form id="weigh-form" class="card">
+            <h2>Weigh-in</h2>
+            <div class="row">
+              <label>Date <input type="date" name="date" required></label>
+              <label>Kg <input type="number" name="kg" step="0.1" min="40" max="200" required></label>
+              <button type="submit">Save</button>
+            </div>
+            <p class="msg" role="alert"></p>
+          </form>
+        </div>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h2>Share with a coach</h2>
+          <p class="hint">Coaches get a read-only view of your dashboard. You can take it back at any time.</p>
+          <form id="share-form" class="row">
+            <input name="coach" placeholder="Coach username" maxlength="32" required>
+            <button type="submit">Share</button>
+          </form>
+          <p class="msg" role="alert"></p>
+          <ul id="coaches" class="plain"></ul>
+        </div>
+        <div class="card">
+          <h2>Recent account activity</h2>
+          <p class="hint">Logins and sharing changes. If something here was not you, change your password.</p>
+          <table class="mini"><tbody id="audit"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <section id="coach" hidden>
+      <div class="card">
+        <h2>Your athletes</h2>
+        <p class="hint">Athletes appear here when they share their dashboard with you.</p>
+        <div id="athlete-list" class="chips"></div>
+      </div>
+      <div id="coach-dash"></div>
+    </section>
+  </main>
+
+  <div id="tip" class="tip" hidden></div>
+  <footer>Made by Talha Aker</footer>
+</body>
+</html>
